@@ -1,9 +1,9 @@
 var Chat = require("../models/chat");
 var User = require("../models/user");
 
-var middlewareObj = {};
+var middlewareObj123 = {};
 
-middlewareObj.isLoggedIn = function (req, res, next) {
+middlewareObj123.isLoggedIn = function (req, res, next) {
     if (req.isAuthenticated()) {
         return next();
     } else {
@@ -11,4 +11,4 @@ middlewareObj.isLoggedIn = function (req, res, next) {
     }
 }
 
-module.exports = middlewareObj;
+module.exports = middlewareObj123;
