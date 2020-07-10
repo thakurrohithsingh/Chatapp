@@ -13,7 +13,7 @@ router.get("/", function (req, res, next) {
         } else {
             for (var i = 0; i < users.length; i++) {
                 Userids[i] = users[i]._id;
-                //console.log("Useris = ", Userids[i]);
+                console.log("Useris = ", Userids[i]);
                 Usersname[i] = users[i].username;
                 //console.log("username = ", Usersname[i])
             }

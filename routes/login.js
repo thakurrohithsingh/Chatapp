@@ -24,7 +24,7 @@ router.post("/register", function (req, res) {
             return res.render("register");
         }
         passport.authenticate("local")(req, res, function () {
-            console.log("user authenticated=======");
+            console.log("user authenticated=======", req.user);
             res.redirect("/chat");
         });
     });
