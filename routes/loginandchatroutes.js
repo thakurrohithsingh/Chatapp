@@ -13,13 +13,12 @@ const pusher = new Pusher({
   key: 'ebe85964f2ab0f1bcdc6',
   secret: '5861fc501f0dd4619b70',
   cluster: 'ap2',
-  //encrypted: true,
-  useTLS: true
+  encrypted: true
 });
 
 //root route
 router.get("/", function (req, res) {
-  console.log("router gets activated", req.user);
+  //console.log("router gets activated", req.user);
   if (req.user) {
     var currentuserid = req.user._id;
     res.redirect("/chat/" + currentuserid);
@@ -73,11 +72,6 @@ router.get("/logout", function (req, res) {
 
 router.get("/chat/:currentuserid", function (req, res) {
   var currentuserid = req.params.currentuserid;
-  // res.setHeader("Content-Type", "application/json");
-  // res.statusCode = 200;
-  // User.find({}).then(function (users) {
-  //   res.json(users);
-  // });
   User.find({}, function (err, foundusers) {
     if (err) {
       res.redirect("back");
@@ -123,17 +117,15 @@ router.get("/chat/:currentuserid/:receivierid", function (req, res) {
 });
 
 router.post("/video-chat/:currentuserid/pusher/auth", (req, res) => {
-  var currentuserid = req.params.currentuserid;
   var socketId = req.body.socket_id;
   var channel = req.body.channel_name;
-  console.log("currentuserid = ", currentuserid);
-  console.log("socketId = ", socketId);
-  console.log("channel = ", channel);
   var presenceData = {
-    user_id: currentuserid
+    user_id:
+      Math.random()
+        .toString(36)
+        .slice(2) + Date.now()
   };
   const auth = pusher.authenticate(socketId, channel, presenceData);
-  console.log("auth = ", auth);
   res.send(auth);
 });
 

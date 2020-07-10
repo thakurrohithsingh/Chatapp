@@ -8,8 +8,7 @@
   else
     root["io"] = factory();
 })(this, function () {
-  return /******/ (function (modules) { // webpackBootstrapnsdjbhjbjcvj
-    //hjdfjhhchbh
+  return /******/ (function (modules) { // webpackBootstrap
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
 

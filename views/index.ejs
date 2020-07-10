@@ -4,63 +4,28 @@
 <head>
     <meta charset="utf-8">
     <title>chatapplication</title>
-    <!-- <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"> -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.1.3/css/bootstrap.min.css">
-    <link rel="stylesheet"
-        href="https://cdnjs.cloudflare.com/ajax/libs/material-design-icons/3.0.1/iconfont/material-icons.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
-    <!-- <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css"> -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <link href="/css/style.css" rel="stylesheet" />
-    <link rel="manifest" href="/manifest.json" />
 </head>
 
 <body>
+
     <div id="mario-chat">
         <h2>Logged as <%= currentusername %></h2>
         <ul id="users">
             <% for(let i=0;i<userids.length;i++){ %>
             <% if(currentuserid.toString() != userids[i].toString()){ %>
-            <li><a href="/chat/<%= currentuserid %>/<%= userids[i] %>" onclick="addicon()"><%= usernames[i] %></a></li>
+            <li><a href="/chat/<%= currentuserid %>/<%= userids[i] %>"><%= usernames[i] %></a></li>
             <% } %>
             <% } %>
         </ul>
+        <div id="chat-window">
+            <div id="output"></div>
+            <div id="feedback"></div>
+        </div>
     </div>
 </body>
-<script src="/js/app.js"></script>
-<script>
-    function addicon() {
-        if (deferredPrompt) {
-            deferredPrompt.prompt();
-            deferredPrompt.userChoice.then(function (choiceResult) {
-                console.log(choiceResult.outcome);
-
-                if (choiceResult.outcome === 'dismissed') {
-                    console.log('User cancelled installation');
-                } else {
-                    console.log('User added to home screen');
-                }
-            });
-            deferredPrompt = null;
-        }
-        deferredPrompt = null;
-    }
-    // // fetching initial chat messages from the database
-    // (function () {
-    //     fetch("/chat")
-    //         .then(data => {
-    //             return data.json();
-    //         })
-    //         .then(json => {
-    //             json.map(data => {
-    //                 let li = document.createElement("li");
-    //                 let span = document.createElement("span");
-    //                 messages.appendChild(li).append(data.message);
-    //                 messages
-    //                     .appendChild(span)
-    //                     .append("by " + data.sender + ": " + formatTimeAgo(data.createdAt));
-    //             });
-    //         });
-    // })();
-</script>
+<script></script>
 
 </html>

@@ -1,6 +1,7 @@
 var express = require("express"),
   app = express(),
   bodyParser = require("body-parser"),
+  Pusher = require('pusher'),
   dateTime = require("simple-datetime-formater"),
   mongoose = require("mongoose"),
   passport = require("passport"),
@@ -9,9 +10,8 @@ var express = require("express"),
   Chat = require("./models/chatschema"),
   SocketIO = require("./models/socketioschema");
 
-//app.use(express.static(__dirname));
-app.use(express.static(__dirname + "/public"));
 
+app.use(express.static(__dirname + "/public"));
 //requiring routes
 var loginandchatsRoutes = require("./routes/loginandchatroutes");
 
@@ -20,6 +20,14 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.set("view engine", "ejs");
 
+// Create an instance of Pusher
+const pusher = new Pusher({
+  appId: '1031179',
+  key: 'ebe85964f2ab0f1bcdc6',
+  secret: '5861fc501f0dd4619b70',
+  cluster: 'ap2',
+  encrypted: true
+});
 
 //PASSPORT CONFIGURATION
 app.use(require("express-session")({
@@ -59,7 +67,6 @@ var useronline = [];
 io.on("connection", function (socket) {
   console.log("user connected!!!", socket.id);
   socket.on("user_connected", function (data) {
-    console.log("user_connected_data", data);
     SocketIO.find({}, function (err, socketsfound) {
       if (err) {
         console.log("err", err.message);
@@ -282,14 +289,13 @@ io.on("connection", function (socket) {
   });
   socket.on("typing", function (data) {
     //console.log("typingdata", data);
-    console.log("usersarray = ", usersarray);
     for (var i = 0; i < usersarray.length; i++) {
       if ((usersarray[i].senderid === data.receivierid) && (usersarray[i].receivierid == data.senderid)) {
         socketid1 = usersarray[i].sendersocketid;
         break;
       }
     }
-    console.log("socketid1", socketid1);
+    //console.log("socketid1", socketid1);
     obj3 = {
       sender: data.sender,
       senderid: data.senderid,
@@ -298,7 +304,7 @@ io.on("connection", function (socket) {
       receivierid: data.receivierid,
       receiviersocketid: socketid1
     }
-    console.log("typing.......", obj3);
+    //console.log("typing.......", obj3);
     io.to(socketid1).emit("typing", obj3);
   });
   socket.on('disconnect', () => {
