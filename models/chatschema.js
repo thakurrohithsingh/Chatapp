@@ -1,7 +1,7 @@
 var mongoose = require("mongoose");
 var Schema = mongoose.Schema;
 
-var chatSchema = new Schema({
+var ChatSchema = new Schema({
     senderid: {
         type: String
     },
@@ -23,6 +23,6 @@ var chatSchema = new Schema({
     ]
 });
 
-let Chat = mongoose.model("Chat", chatSchema);
+let Chat = mongoose.model("Chat", ChatSchema);
 
 module.exports = Chat;

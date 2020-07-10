@@ -1,31 +1,31 @@
 var express = require("express"),
-    app = express(),
-    bodyParser = require("body-parser"),
-    dateTime = require("simple-datetime-formater"),
-    mongoose = require("mongoose"),
-    passport = require("passport"),
-    LocalStrategy = require("passport-local"),
-    User = require("./models/userschema"),
-    Chat = require("./models/chatschema"),
-    SocketIO = require("./models/socketioschema");
+  app = express(),
+  bodyParser = require("body-parser"),
+  dateTime = require("simple-datetime-formater"),
+  mongoose = require("mongoose"),
+  passport = require("passport"),
+  LocalStrategy = require("passport-local"),
+  User = require("./models/userschema"),
+  Chat = require("./models/chatschema"),
+  SocketIO = require("./models/socketioschema");
 
 
 
 app.use(express.static(__dirname + "/public"));
 //requiring routes
 var loginRoutes = require("./routes/loginroutes"),
-    chatRoutes = require("./routes/chatroutes");
+  chatRoutes = require("./routes/chatroutes");
 
-mongoose.connect("mongodb://localhost/chatapp3", { useUnifiedTopology: true, useNewUrlParser: true, useCreateIndex: true, useFindAndModify: false });
+mongoose.connect("mongodb://localhost/chatapp4", { useUnifiedTopology: true, useNewUrlParser: true, useCreateIndex: true, useFindAndModify: false });
 app.use(bodyParser.urlencoded({ extended: true }));
 app.set("view engine", "ejs");
 
 
 //PASSPORT CONFIGURATION
 app.use(require("express-session")({
-    secret: "Once again Rusty wins cutest dog!",
-    resave: false,
-    saveUninitialized: false
+  secret: "Once again Rusty wins cutest dog!",
+  resave: false,
+  saveUninitialized: false
 }));
 app.use(passport.initialize());
 app.use(passport.session());
@@ -35,9 +35,9 @@ passport.deserializeUser(User.deserializeUser());
 
 var user;
 app.use(function (req, res, next) {
-    res.locals.currentUser = req.user;
-    user = req.user;
-    next();
+  res.locals.currentUser = req.user;
+  user = req.user;
+  next();
 });
 
 app.use("/", loginRoutes);
@@ -48,195 +48,262 @@ app.use("/chat", chatRoutes);
 var socket = require("socket.io");
 var port = 8000;
 var server = app.listen(port, function () {
-    console.log("The chatapp Server Has Started! at port no " + port);
+  console.log("The chatapp Server Has Started! at port no " + port);
 });
 var io = socket(server);
 var usersobj = {};
 var usersarray = [];
 var obj2 = {};
 var obj3 = {};
-var message = [];
 var messageobj = {};
 var socketid12;
 var socketid1;
 io.on("connection", function (socket) {
-    console.log("user connected!!!", socket.id);
-    socket.on("user_connected", function (data) {
-        SocketIO.find({}, function (err, socketsfound) {
-            if (err) {
+  console.log("user connected!!!", socket.id);
+  socket.on("user_connected", function (data) {
+    SocketIO.find({}, function (err, socketsfound) {
+      if (err) {
+        console.log("err", err.message);
+      }
+      else {
+        if (socketsfound.length > 0) {
+          var socketid;
+          for (var i = 0; i < socketsfound.length; i++) {
+            var socketsenderid = socketsfound[i].user.senderid;
+            var socketreceivierid = socketsfound[i].user.receivierid;
+            if ((socketsenderid == data.senderid) && (socketreceivierid == data.receivierid)) {
+              socketid = socketsfound[i]._id;
+              break;
+            }
+          }
+          console.log("socketid", socketid);
+          if (socketid) {
+            SocketIO.findById(socketid, function (err, foundsocket) {
+              if (err) {
                 console.log("err", err.message);
-            }
-            else {
-                //console.log("socketsfound=====", socketsfound);
-                if (socketsfound.length > 0) {
-                    var socketid;
-                    for (var i = 0; i < socketsfound.length; i++) {
-                        var socketsenderid = socketsfound[i].user.senderid;
-                        var socketreceivierid = socketsfound[i].user.receivierid;
-                        if ((socketsenderid == data.senderid) && (socketreceivierid == data.receivierid)) {
-                            socketid = socketsfound[i]._id;
-                            break;
+              } else {
+                var user12 = {
+                  senderid: foundsocket.user.senderid,
+                  sender: foundsocket.user.sender,
+                  receivier: foundsocket.user.receivier,
+                  receivierid: foundsocket.user.receivierid
+                };
+                var newData = {
+                  sendersocketId: socket.id,
+                  user: user12
+                };
+                SocketIO.findByIdAndUpdate(socketid, newData, { new: true }, function (err, socketupdated) {
+                  if (err) {
+                    console.log("err", err.message);
+                  } else {
+                    Chat.findOne({
+                      $or: [
+                        {
+                          $and: [
+                            { senderid: socketupdated.user.senderid },
+                            { receivierid: socketupdated.user.receivierid }
+                          ]
+                        },
+                        {
+                          $and: [
+                            { senderid: socketupdated.user.receivierid },
+                            { receivierid: socketupdated.user.senderid }
+                          ]
                         }
-                    }
-                    console.log("socketid============", socketid);
-                    if (socketid) {
-                        SocketIO.findById(socketid, function (err, foundsocket) {
-                            if (err) {
-                                console.log("err", err.message);
-                            } else {
-                                var user12 = {
-                                    senderid: foundsocket.user.senderid,
-                                    sender: foundsocket.user.sender,
-                                    receivier: foundsocket.user.receivier,
-                                    receivierid: foundsocket.user.receivierid
-                                };
-                                var newData = {
-                                    sendersocketId: socket.id,
-                                    user: user12
-                                };
-                                SocketIO.findByIdAndUpdate(socketid, newData, { new: true }, function (err, socketupdated) {
-                                    if (err) {
-                                        console.log("err", err.message);
-                                    } else {
-                                        //console.log("updatedsocketid", socketupdated);
-                                        usersobj = {
-                                            senderid: socketupdated.user.senderid,
-                                            sender: socketupdated.user.sender,
-                                            sendersocketid: socketupdated.sendersocketId,
-                                            receivierid: socketupdated.user.receivierid,
-                                            receivier: socketupdated.user.receivier
-                                        };
-                                        usersarray.push(usersobj);
-                                        //console.log("userobj *++***= ", usersobj);
-                                        io.to(socket.id).emit("user_connected", usersobj);
-                                    }
-                                });
-                            }
-                        });
-                    } else {
+                      ]
+                    }, function (err, chatfound) {
+                      if (err) {
+                        console.log("err", err.message);
+                      } else {
+                        var messages = chatfound.message;
+                        //console.log("messages", messages);
                         usersobj = {
-                            sender: data.sender,
-                            senderid: data.senderid,
-                            sendersocketid: socket.id,
-                            receivier: data.receivier,
-                            receivierid: data.receivierid
-                        }
-                        usersarray.push(usersobj);
-                        var user = {
-                            senderid: data.senderid,
-                            sender: data.sender,
-                            receivier: data.receivier,
-                            receivierid: data.receivierid
-
+                          senderid: socketupdated.user.senderid,
+                          sender: socketupdated.user.sender,
+                          sendersocketid: socketupdated.sendersocketId,
+                          receivierid: socketupdated.user.receivierid,
+                          receivier: socketupdated.user.receivier,
+                          Message: messages
                         };
-                        var NewSocketobj = {
-                            sendersocketId: usersobj.sendersocketid,
-                            user: user
-                        }
-                        SocketIO.create(NewSocketobj, function (err, socketcreated) {
-                            if (err) {
-                                console.log("err", err.message);
-                            }
-                            //console.log("socketscreated***********************************", socketcreated);
-                            io.to(socket.id).emit("user_connected", usersobj);
-                        });
-                    }
-                } else {
-                    usersobj = {
-                        sender: data.sender,
-                        senderid: data.senderid,
-                        sendersocketid: socket.id,
-                        receivier: data.receivier,
-                        receivierid: data.receivierid
-                    }
-                    usersarray.push(usersobj);
-                    var user = {
-                        senderid: data.senderid,
-                        sender: data.sender,
-                        receivier: data.receivier,
-                        receivierid: data.receivierid
-
-                    };
-                    var NewSocketobj = {
-                        sendersocketId: usersobj.sendersocketid,
-                        user: user
-                    }
-                    SocketIO.create(NewSocketobj, function (err, socketcreated) {
-                        if (err) {
-                            console.log("err", err.message);
-                        }
-                        //console.log("socketscreated==========================", socketcreated);
+                        usersarray.push(usersobj);
+                        //console.log("usersobj = =", usersobj);
                         io.to(socket.id).emit("user_connected", usersobj);
+                      }
                     });
-                }
+                  }
+                });
+              }
+            });
+          } else {
+            usersobj = {
+              sender: data.sender,
+              senderid: data.senderid,
+              sendersocketid: socket.id,
+              receivier: data.receivier,
+              receivierid: data.receivierid
             }
-        });
-    });
-    socket.on("send_message", function (data) {
-        //console.log("send_message_data", data);
-        //console.log("users in send_message socket", usersarray);
-        var chatobj = {};
-        for (var i = 0; i < usersarray.length; i++) {
-            if ((usersarray[i].senderid === data.receivierid) && (usersarray[i].receivierid == data.senderid)) {
-                socketid12 = usersarray[i].sendersocketid;
-                break;
+            usersarray.push(usersobj);
+            var user = {
+              senderid: data.senderid,
+              sender: data.sender,
+              receivier: data.receivier,
+              receivierid: data.receivierid
+
+            };
+            var NewSocketobj = {
+              sendersocketId: usersobj.sendersocketid,
+              user: user
             }
-        }
-        console.log("socketid12", socketid12);
-        obj2 = {
-            message: data.message,
-            sendersocketid: data.sendersocketid,
+            SocketIO.create(NewSocketobj, function (err, socketcreated) {
+              if (err) {
+                console.log("err", err.message);
+              }
+              io.to(socket.id).emit("user_connected", usersobj);
+            });
+          }
+        } else {
+          usersobj = {
             sender: data.sender,
             senderid: data.senderid,
-            receiviersocketid: socketid12,
+            sendersocketid: socket.id,
             receivier: data.receivier,
             receivierid: data.receivierid
-        };
-        //console.log("sending new message", obj2);
-        SocketIO.findOne({ sendersocketId: obj2.sendersocketid }, function (err, onesocketfound) {
-            if (err) {
-                console.log("err", err.message);
-            }
-            console.log("onesocketfound=====", onesocketfound);
-            SocketIO.findByIdAndUpdate(onesocketfound._id, { receiviersocketId: socketid12, message: obj2.message }, { new: true }, function (err, socketupdated) {
-                if (err) {
-                    console.log("err", err.message);
-                }
-                messageobj = {
-                    message: obj2.message,
-                    id: obj2.senderid,
-                    username: obj2.sender
-                };
-                message.push(messageobj);
-                console.log("socketupdated======", socketupdated);
-            });
-        });
-        io.to(socketid12).emit("new_message", obj2);
-    });
-    socket.on("typing", function (data) {
-        //console.log("typingdata", data);
-        for (var i = 0; i < usersarray.length; i++) {
-            if ((usersarray[i].senderid === data.receivierid) && (usersarray[i].receivierid == data.senderid)) {
-                socketid1 = usersarray[i].sendersocketid;
-                break;
-            }
-        }
-        //console.log("socketid1", socketid1);
-        obj3 = {
-            sender: data.sender,
+          }
+          usersarray.push(usersobj);
+          var user = {
             senderid: data.senderid,
-            sendersocketid: data.sendersocketid,
+            sender: data.sender,
             receivier: data.receivier,
-            receivierid: data.receivierid,
-            receiviersocketid: socketid1
+            receivierid: data.receivierid
+
+          };
+          var NewSocketobj = {
+            sendersocketId: usersobj.sendersocketid,
+            user: user
+          }
+          SocketIO.create(NewSocketobj, function (err, socketcreated) {
+            if (err) {
+              console.log("err", err.message);
+            }
+            io.to(socket.id).emit("user_connected", usersobj);
+          });
         }
-        //console.log("typing.......", obj3);
-        io.to(socketid1).emit("typing", obj3);
+      }
     });
-    socket.on('disconnect', () => {
-        // console.log("users in disconnecyted", usersarray);
-        console.log('user disconnected');
+  });
+  socket.on("send_message", function (data) {
+    //console.log("send_message_data", data);
+    //console.log("users in send_message socket", usersarray);
+    var message = [];
+    var chatobj = {};
+    for (var i = 0; i < usersarray.length; i++) {
+      if ((usersarray[i].senderid === data.receivierid) && (usersarray[i].receivierid == data.senderid)) {
+        socketid12 = usersarray[i].sendersocketid;
+        break;
+      }
+    }
+    console.log("socketid12", socketid12);
+    obj2 = {
+      message: data.message,
+      sendersocketid: data.sendersocketid,
+      sender: data.sender,
+      senderid: data.senderid,
+      receiviersocketid: socketid12,
+      receivier: data.receivier,
+      receivierid: data.receivierid
+    };
+    //console.log("sending new message", obj2);
+    SocketIO.findOne({ sendersocketId: obj2.sendersocketid }, function (err, onesocketfound) {
+      if (err) {
+        console.log("err", err.message);
+      }
+      //console.log("onesocketfound=====", onesocketfound);
+      SocketIO.findByIdAndUpdate(onesocketfound._id, { receiviersocketId: socketid12, message: obj2.message }, { new: true }, function (err, socketupdated) {
+        if (err) {
+          console.log("err", err.message);
+        }
+      });
     });
+    messageobj = {
+      message: obj2.message,
+      id: obj2.senderid,
+      username: obj2.sender
+    };
+    //console.log("socketupdated======", socketupdated);
+    Chat.findOne({
+      $or: [
+        {
+          $and: [
+            { senderid: obj2.senderid },
+            { receivierid: obj2.receivierid }
+          ]
+        },
+        {
+          $and: [
+            { senderid: obj2.receivierid },
+            { receivierid: obj2.senderid }
+          ]
+        }
+      ]
+    }, function (err, chatfound) {
+      if (err) {
+        console.log("err", err.message);
+      } else {
+        //console.log("chat found===",chatfound);
+        if (chatfound) {
+          var messages = chatfound.message;
+          //console.log("chat found message",messages);
+          messages.push(messageobj);
+          Chat.findByIdAndUpdate(chatfound._id, { message: messages }, { new: true }, function (err, chatupdated) {
+            if (err) {
+              console.log("err", err.message);
+            }
+            //console.log("chatupdated", chatupdated.message);
+          });
+        } else {
+          message.push(messageobj);
+          chatobj = {
+            sender: obj2.sender,
+            senderid: obj2.senderid,
+            receivier: obj2.receivier,
+            receivierid: obj2.receivierid,
+            message: message
+          };
+          Chat.create(chatobj, function (err, chatcreated) {
+            if (err) {
+              console.log("err", err.message);
+            }
+            //console.log("chatcreated", chatcreated);
+          });
+        }
+      }
+    });
+    io.to(socketid12).emit("new_message", obj2);
+  });
+  socket.on("typing", function (data) {
+    //console.log("typingdata", data);
+    for (var i = 0; i < usersarray.length; i++) {
+      if ((usersarray[i].senderid === data.receivierid) && (usersarray[i].receivierid == data.senderid)) {
+        socketid1 = usersarray[i].sendersocketid;
+        break;
+      }
+    }
+    //console.log("socketid1", socketid1);
+    obj3 = {
+      sender: data.sender,
+      senderid: data.senderid,
+      sendersocketid: data.sendersocketid,
+      receivier: data.receivier,
+      receivierid: data.receivierid,
+      receiviersocketid: socketid1
+    }
+    //console.log("typing.......", obj3);
+    io.to(socketid1).emit("typing", obj3);
+  });
+  socket.on('disconnect', () => {
+    // console.log("users in disconnecyted", usersarray);
+    console.log('user disconnected');
+  });
 });
 
 

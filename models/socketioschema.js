@@ -1,6 +1,6 @@
 var mongoose = require("mongoose");
 
-var SocketIOSchema = new mongoose.Schema({
+var SocketIoSchema = new mongoose.Schema({
     sendersocketId: {
         type: String
     },
@@ -26,4 +26,4 @@ var SocketIOSchema = new mongoose.Schema({
     }
 });
 
-module.exports = mongoose.model("SocketIO", SocketIOSchema);
+module.exports = mongoose.model("SocketIO", SocketIoSchema);
