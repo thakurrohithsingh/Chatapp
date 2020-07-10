@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="utf-8">
-    <title>WebScockets 101</title>
+    <title>chatapplication</title>
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     <script src="/scripts/socket.io.js"></script>
@@ -14,110 +14,20 @@
 
     <div id="mario-chat">
         <h2>Mario Chat</h2>
-        <ul id="users"></ul>
+        <ul id="users">
+            <% for(let i=0;i<userids.length;i++){ %>
+            <% if(currentuserid.toString() != userids[i].toString()){ %>
+            <li><a href="/chat/<%= currentuserid %>/<%= userids[i] %>"><%= usernames[i] %></a></li>
+            <% } %>
+            <% } %>
+        </ul>
         <div id="chat-window">
             <div id="output"></div>
             <div id="feedback"></div>
         </div>
-        <input id="name" placeholder="enter name" type="text">
-        <input id="message" type="text" placeholder="Message" />
-        <button id="send">Send</button>
     </div>
-
 </body>
 <script>
-
-    var users = <% - JSON.stringify(users) %>;
-    var userids = <% - JSON.stringify(userids) %>;
-    var usernames = <% - JSON.stringify(usernames) %>;
-    var currentuser = <% - JSON.stringify(currentUser) %>;
-    var senderuserdata;
-    var senderuserdataid;
-    var receiveruserdata;
-    var receiveruserdataid;
-    var receiverid;
-    var receivier = [];
-    var sender = [];
-    var socket = io();
-    // Query DOM
-    var message = document.getElementById('message'),
-        btn = document.getElementById('send'),
-        output = document.getElementById('output'),
-        feedback = document.getElementById('feedback'),
-        name = document.getElementById('name').value,
-        htmlusers = document.getElementById('users');
-    // Emit events
-    console.log("namw = =", name);
-    for (var i = 0; i < userids.length; i++) {
-        if (currentuser._id === userids[i]) {
-            senderuserdata = usernames[i];
-            senderuserdataid = userids[i];
-            break;
-        }
-    }
-    for (var i = 0; i < userids.length; i++) {
-        if (currentuser._id !== userids[i]) {
-            var html = '';
-            html += "<li><button onClick='onUserSelected(this.innerHTML);'>" + usernames[i] + "</button></li>";
-            htmlusers.innerHTML += html;
-        }
-    }
-
-    function onUserSelected(receivername) {
-        console.log("receivername", receivername);
-        for (var i = 0; i < usernames.length; i++) {
-            if (receivername === usernames[i]) {
-                receiverid = userids[i];
-                receivier[receiverid] = receivername;
-                break;
-            }
-        }
-    }
-    sender[senderuserdataid] = senderuserdata;
-    socket.emit('user_connected', {
-        sender: sender[senderuserdataid],
-        senderid: senderuserdataid
-    });
-
-
-    btn.addEventListener('click', function () {
-        if (message.value === '') {
-            btn.disabled = true;
-        } else {
-            btn.disabled = false;
-            feedback.innerHTML = '';
-            output.innerHTML += '<p><strong>' + 'You' + ': </strong>' + message.value + '</p>';
-            socket.emit('send_message', {
-                message: message.value,
-                sender: sender[senderuserdataid],
-                senderid: senderuserdataid,
-                receivier: receivier[receiverid],
-                receivierid: receiverid
-            });
-            message.value = "";
-        }
-        btn.disabled = false;
-    });
-
-    message.addEventListener('keypress', function () {
-        socket.emit('typing', {
-            sender: sender[senderuserdataid],
-            senderid: senderuserdataid,
-            receivier: receivier[receiverid],
-            receiverid: receiverid
-        });
-    })
-
-    // Listen for events
-    socket.on('new_message', function (data) {
-        btn.disabled = false;
-        feedback.innerHTML = '';
-        output.innerHTML += '<p><strong>' + data.sender + ': </strong>' + data.message + '</p>';
-    });
-
-    socket.on('typing', function (data) {
-        feedback.innerHTML = '<p><em>' + data.sender + ' is typing a message...</em></p>';
-    });
 </script>
 
 </html>

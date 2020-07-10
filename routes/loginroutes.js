@@ -1,7 +1,8 @@
 var express = require("express");
 var router = express.Router();
 var passport = require("passport");
-var User = require("../models/user");
+var User = require("../models/userschema");
+var SocketIO = require("../models/socketioschema");
 
 //root route
 router.get("/", function (req, res) {
@@ -16,15 +17,15 @@ router.get("/register", function (req, res) {
 //handle sign up logic
 router.post("/register", function (req, res) {
     var newUser = new User({ username: req.body.username });
-    console.log("username", newUser);
-    console.log("password", req.body.password);
+    //console.log("username", newUser);
+    //console.log("password", req.body.password);
     User.register(newUser, req.body.password, function (err, user) {
         if (err) {
             console.log("err", err.message);
             return res.render("register");
         }
         passport.authenticate("local")(req, res, function () {
-            console.log("user authenticated=======", req.user);
+            console.log("user authenticated=======");
             res.redirect("/chat");
         });
     });
