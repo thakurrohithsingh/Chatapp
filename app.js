@@ -9,14 +9,14 @@ var express = require("express"),
   Chat = require("./models/chatschema"),
   SocketIO = require("./models/socketioschema");
 
-
-
+//app.use(express.static(__dirname));
 app.use(express.static(__dirname + "/public"));
+
 //requiring routes
-var loginRoutes = require("./routes/loginroutes"),
-  chatRoutes = require("./routes/chatroutes");
+var loginandchatsRoutes = require("./routes/loginandchatroutes");
 
 mongoose.connect("mongodb://localhost/chatapp4", { useUnifiedTopology: true, useNewUrlParser: true, useCreateIndex: true, useFindAndModify: false });
+app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.set("view engine", "ejs");
 
@@ -33,15 +33,12 @@ passport.use(new LocalStrategy(User.authenticate()));
 passport.serializeUser(User.serializeUser());
 passport.deserializeUser(User.deserializeUser());
 
-var user;
 app.use(function (req, res, next) {
   res.locals.currentUser = req.user;
-  user = req.user;
   next();
 });
 
-app.use("/", loginRoutes);
-app.use("/chat", chatRoutes);
+app.use("/", loginandchatsRoutes);
 
 
 //require the socket.io module
@@ -58,9 +55,11 @@ var obj3 = {};
 var messageobj = {};
 var socketid12;
 var socketid1;
+var useronline = [];
 io.on("connection", function (socket) {
   console.log("user connected!!!", socket.id);
   socket.on("user_connected", function (data) {
+    console.log("user_connected_data", data);
     SocketIO.find({}, function (err, socketsfound) {
       if (err) {
         console.log("err", err.message);
@@ -76,7 +75,6 @@ io.on("connection", function (socket) {
               break;
             }
           }
-          console.log("socketid", socketid);
           if (socketid) {
             SocketIO.findById(socketid, function (err, foundsocket) {
               if (err) {
@@ -115,21 +113,34 @@ io.on("connection", function (socket) {
                       if (err) {
                         console.log("err", err.message);
                       } else {
-                        var messages = chatfound.message;
-                        //console.log("messages", messages);
-                        usersobj = {
-                          senderid: socketupdated.user.senderid,
-                          sender: socketupdated.user.sender,
-                          sendersocketid: socketupdated.sendersocketId,
-                          receivierid: socketupdated.user.receivierid,
-                          receivier: socketupdated.user.receivier,
-                          Message: messages
-                        };
-                        usersarray.push(usersobj);
-                        //console.log("usersobj = =", usersobj);
-                        io.to(socket.id).emit("user_connected", usersobj);
+                        if (chatfound) {
+                          //console.log("messags = ", chatfound);
+                          //console.log("chat messsges length", chatfound.message.length);
+                          var messages = chatfound.message;
+                          //console.log("messages", messages);
+                          usersobj = {
+                            senderid: socketupdated.user.senderid,
+                            sender: socketupdated.user.sender,
+                            sendersocketid: socketupdated.sendersocketId,
+                            receivierid: socketupdated.user.receivierid,
+                            receivier: socketupdated.user.receivier,
+                            Message: messages
+                          };
+                          usersarray.push(usersobj);
+                          io.to(socket.id).emit("user_connected", usersobj);
+                        }
                       }
                     });
+                    usersobj = {
+                      senderid: socketupdated.user.senderid,
+                      sender: socketupdated.user.sender,
+                      sendersocketid: socketupdated.sendersocketId,
+                      receivierid: socketupdated.user.receivierid,
+                      receivier: socketupdated.user.receivier
+                    };
+                    usersarray.push(usersobj);
+                    //console.log("hdvhdvhdghgdf = ", usersarray);
+                    io.to(socket.id).emit("user_connected", usersobj);
                   }
                 });
               }
@@ -196,6 +207,7 @@ io.on("connection", function (socket) {
     //console.log("users in send_message socket", usersarray);
     var message = [];
     var chatobj = {};
+    //console.log("users array in send_message", usersarray);
     for (var i = 0; i < usersarray.length; i++) {
       if ((usersarray[i].senderid === data.receivierid) && (usersarray[i].receivierid == data.senderid)) {
         socketid12 = usersarray[i].sendersocketid;
@@ -212,18 +224,6 @@ io.on("connection", function (socket) {
       receivier: data.receivier,
       receivierid: data.receivierid
     };
-    //console.log("sending new message", obj2);
-    SocketIO.findOne({ sendersocketId: obj2.sendersocketid }, function (err, onesocketfound) {
-      if (err) {
-        console.log("err", err.message);
-      }
-      //console.log("onesocketfound=====", onesocketfound);
-      SocketIO.findByIdAndUpdate(onesocketfound._id, { receiviersocketId: socketid12, message: obj2.message }, { new: true }, function (err, socketupdated) {
-        if (err) {
-          console.log("err", err.message);
-        }
-      });
-    });
     messageobj = {
       message: obj2.message,
       id: obj2.senderid,
@@ -282,13 +282,14 @@ io.on("connection", function (socket) {
   });
   socket.on("typing", function (data) {
     //console.log("typingdata", data);
+    console.log("usersarray = ", usersarray);
     for (var i = 0; i < usersarray.length; i++) {
       if ((usersarray[i].senderid === data.receivierid) && (usersarray[i].receivierid == data.senderid)) {
         socketid1 = usersarray[i].sendersocketid;
         break;
       }
     }
-    //console.log("socketid1", socketid1);
+    console.log("socketid1", socketid1);
     obj3 = {
       sender: data.sender,
       senderid: data.senderid,
@@ -297,7 +298,7 @@ io.on("connection", function (socket) {
       receivierid: data.receivierid,
       receiviersocketid: socketid1
     }
-    //console.log("typing.......", obj3);
+    console.log("typing.......", obj3);
     io.to(socketid1).emit("typing", obj3);
   });
   socket.on('disconnect', () => {
